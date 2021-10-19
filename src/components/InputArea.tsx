@@ -9,6 +9,7 @@ import { InputAreaProps, UserDataProps } from "../utils/types";
 export default function InputArea({ dataReceiver, loading }: InputAreaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const [cepError, setCepError] = useState<boolean>(false);
+  const [exiting, setExiting] = useState<boolean>(false);
   const {
     register,
     handleSubmit,
@@ -16,13 +17,23 @@ export default function InputArea({ dataReceiver, loading }: InputAreaProps) {
   } = useForm<UserDataProps>({
     mode: "onTouched",
   });
-  const onSubmit: SubmitHandler<UserDataProps> = data => {
+  const onSubmit: SubmitHandler<UserDataProps> = async data => {
     if (data.cep.includes("_")) return setCepError(true);
     setCepError(false);
-    dataReceiver({
+    await dataReceiver({
       cep: data.cep,
       currSpendingAmount: data.currSpendingAmount,
       material: data.material,
+    });
+
+    gsap.to(containerRef.current, {
+      duration: 1.3,
+      opacity: 0,
+      ease: "ease-in",
+      css: {
+        transform: "scale(0)",
+      },
+      onComplete: () => setExiting(true),
     });
   };
 
@@ -38,59 +49,64 @@ export default function InputArea({ dataReceiver, loading }: InputAreaProps) {
   }, []);
 
   return (
-    <Container ref={containerRef}>
-      <Title>Hey! Que tal simularmos o seu gasto?</Title>
-      <FormArea onSubmit={handleSubmit(onSubmit)}>
-        <div>
-          <Label htmlFor='cep'>CEP</Label>
-          <InputMask
-            {...register("cep", {
-              required: true,
-              minLength: 8,
-              maxLength: 9,
-            })}
-            mask='99999-999'
-            id='cep'
-            type='text'
-            className={`${errors.cep && "error"} ${cepError && "error"}`}
-          />
-        </div>
-        <div>
-          <Label htmlFor='gastos'>Gasto médio da conta de luz</Label>
-          <input
-            {...register("currSpendingAmount", {
-              required: true,
-              min: 1,
-            })}
-            defaultValue='0'
-            id='gastos'
-            type='text'
-            className={errors.currSpendingAmount && "error"}
-          />
-        </div>
-        <div style={{ position: "relative" }}>
-          <Arrow />
-          <Label htmlFor='material'>Material</Label>
-          <Select id='material' {...register("material")}>
-            {[
-              "fibrocimento-madeira",
-              "fibrocimento-metalico",
-              "ceramico",
-              "metalico",
-              "laje",
-              "solo",
-            ].map(material => (
-              <option key={material} value={material}>
-                {material}
-              </option>
-            ))}
-          </Select>
-        </div>
-        <SubmitBtn type='submit'>
-          {loading ? "Loading..." : "Continuar"}
-        </SubmitBtn>
-      </FormArea>
-    </Container>
+    <>
+      {!exiting && (
+        <Container className={`${exiting && "exit"}`} ref={containerRef}>
+          <Title>Hey! Que tal simularmos o seu gasto?</Title>
+          <FormArea onSubmit={handleSubmit(onSubmit)}>
+            <div>
+              <Label htmlFor='cep'>CEP</Label>
+              <InputMask
+                {...register("cep", {
+                  required: true,
+                  minLength: 8,
+                  maxLength: 9,
+                })}
+                mask='99999-999'
+                id='cep'
+                type='text'
+                className={`${errors.cep && "error"} ${cepError && "error"}`}
+              />
+            </div>
+            <div>
+              <Label htmlFor='gastos'>Gasto médio da conta de luz</Label>
+              <input
+                {...register("currSpendingAmount", {
+                  required: true,
+                  min: 1,
+                  pattern: /^[0-9]+$/,
+                })}
+                defaultValue='0'
+                id='gastos'
+                type='text'
+                className={errors.currSpendingAmount && "error"}
+              />
+            </div>
+            <div style={{ position: "relative" }}>
+              <Arrow />
+              <Label htmlFor='material'>Material</Label>
+              <Select id='material' {...register("material")}>
+                {[
+                  "fibrocimento-madeira",
+                  "fibrocimento-metalico",
+                  "ceramico",
+                  "metalico",
+                  "laje",
+                  "solo",
+                ].map(material => (
+                  <option key={material} value={material}>
+                    {material}
+                  </option>
+                ))}
+              </Select>
+            </div>
+            <SubmitBtn type='submit'>
+              {loading ? "Carregando..." : "Continuar"}
+            </SubmitBtn>
+          </FormArea>
+        </Container>
+      )}
+    </>
   );
 }
 
@@ -101,7 +117,10 @@ const Container = styled.section`
   max-width: 450px;
   border-radius: 0.8rem;
   transform: scale(0);
-  /* transition: transform 4s ease; */
+
+  &.exit {
+    display: none;
+  }
 `;
 
 const Title = styled.h1`
