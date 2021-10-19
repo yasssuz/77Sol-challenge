@@ -1,9 +1,30 @@
 import gsap from "gsap";
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import styled from "styled-components";
+import { useForm, SubmitHandler } from "react-hook-form";
+import InputMask from "react-input-mask";
 
-export default function InputArea() {
+import { InputAreaProps, UserDataProps } from "../utils/types";
+
+export default function InputArea({ dataReceiver, loading }: InputAreaProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const [cepError, setCepError] = useState<boolean>(false);
+  const {
+    register,
+    handleSubmit,
+    formState: { errors },
+  } = useForm<UserDataProps>({
+    mode: "onTouched",
+  });
+  const onSubmit: SubmitHandler<UserDataProps> = data => {
+    if (data.cep.includes("_")) return setCepError(true);
+    setCepError(false);
+    dataReceiver({
+      cep: data.cep,
+      currSpendingAmount: data.currSpendingAmount,
+      material: data.material,
+    });
+  };
 
   useEffect(() => {
     gsap.to(containerRef.current, {
@@ -19,34 +40,38 @@ export default function InputArea() {
   return (
     <Container ref={containerRef}>
       <Title>Hey! Que tal simularmos o seu gasto?</Title>
-      <FormArea>
-        {[
-          {
-            label: "CEP",
-            id: "cep",
-            mask: true,
-          },
-          {
-            label: "Gasto médio da conta de luz",
-            id: "gastos",
-          },
-        ].map(data => (
-          <div key={data.id}>
-            <Label htmlFor={data.id}>{data.label}</Label>
-            <TextInput
-              placeholder={data.id === "cep" ? "00000-000" : "3.500"}
-              id={data.id}
-              type='text'
-            />
-          </div>
-        ))}
+      <FormArea onSubmit={handleSubmit(onSubmit)}>
+        <div>
+          <Label htmlFor='cep'>CEP</Label>
+          <InputMask
+            {...register("cep", {
+              required: true,
+              minLength: 8,
+              maxLength: 9,
+            })}
+            mask='99999-999'
+            id='cep'
+            type='text'
+            className={`${errors.cep && "error"} ${cepError && "error"}`}
+          />
+        </div>
+        <div>
+          <Label htmlFor='gastos'>Gasto médio da conta de luz</Label>
+          <input
+            {...register("currSpendingAmount", {
+              required: true,
+              min: 1,
+            })}
+            defaultValue='0'
+            id='gastos'
+            type='text'
+            className={errors.currSpendingAmount && "error"}
+          />
+        </div>
         <div style={{ position: "relative" }}>
           <Arrow />
           <Label htmlFor='material'>Material</Label>
-          <Select id='material'>
-            <option selected disabled hidden value='fibrocimento-madeira'>
-              selecione o material
-            </option>
+          <Select id='material' {...register("material")}>
             {[
               "fibrocimento-madeira",
               "fibrocimento-metalico",
@@ -61,7 +86,9 @@ export default function InputArea() {
             ))}
           </Select>
         </div>
-        <SubmitBtn type='submit'>Continuar</SubmitBtn>
+        <SubmitBtn type='submit'>
+          {loading ? "Loading..." : "Continuar"}
+        </SubmitBtn>
       </FormArea>
     </Container>
   );
@@ -90,6 +117,26 @@ const FormArea = styled.form`
   width: 100%;
   display: grid;
   gap: 1.5rem;
+
+  input {
+    width: 100%;
+    height: 2.7rem;
+    border-radius: 9px;
+    border: 1px solid ${props => props.theme.colors.lightGray};
+    background: ${props => props.theme.colors.veryLightGray};
+    padding: 0 1.2rem;
+    font-size: 1rem;
+
+    &:focus {
+      outline: dashed 2px ${props => props.theme.colors.blue};
+    }
+
+    &.error {
+      outline: red 1px solid;
+      border: 1px solid red;
+      background: #ff000039;
+    }
+  }
 `;
 
 const Label = styled.label`
@@ -99,20 +146,6 @@ const Label = styled.label`
   margin-bottom: 0.2rem;
   font-size: 0.95rem;
   cursor: pointer;
-`;
-
-const TextInput = styled.input`
-  width: 100%;
-  height: 2.7rem;
-  border-radius: 9px;
-  border: 1px solid ${props => props.theme.colors.lightGray};
-  background: ${props => props.theme.colors.veryLightGray};
-  padding: 0 1.2rem;
-  font-size: 1rem;
-
-  &:focus {
-    outline: dashed 2px ${props => props.theme.colors.blue};
-  }
 `;
 
 const Select = styled.select`
