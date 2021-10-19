@@ -42,7 +42,7 @@ const PageContiner = styled.main`
   min-height: 100vh;
   display: grid;
   place-content: center;
-  grid-template-columns: repeat(2, auto);
+  padding: 1rem;
 `;
 
 export default App;
