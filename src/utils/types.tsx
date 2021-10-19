@@ -7,13 +7,11 @@ export interface UserDataProps {
 export interface FetchedDataProps {
   potencial: string;
   co2: number;
-  parcelas: [
-    {
-      parcelas: number;
-      valor_minimo: number;
-      valor_maximo: number;
-    }
-  ];
+  parcelas: {
+    parcelas: number;
+    valor_minimo: number;
+    valor_maximo: number;
+  }[];
 }
 
 export interface InputAreaProps {
