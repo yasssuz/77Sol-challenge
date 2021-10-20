@@ -1,3 +1,3 @@
-# 6 horas e 23 minutos para desenvolver (sem contar as pausas)
+# 6 horas e 38 minutos para desenvolver (sem contar as pausas)
 
-## 10 minutos de pausa cada 50 minutos
+## https://77-sol-challenge.vercel.app/
