@@ -12,20 +12,26 @@ function App() {
   const [isLoading, setIsLoading] = useState<boolean>(false);
 
   async function fetchData(userData: UserDataProps): Promise<void> {
-    setIsLoading(true);
-    const { material, cep, currSpendingAmount } = userData;
-    const res = await fetch(
-      `https://api2.77sol.com.br/busca-cep?estrutura=${material}&valor_conta=${currSpendingAmount}&cep=${cep}`
-    );
-    const data = await res.json();
-    const formattedData: FetchedDataProps = {
-      potencial: data.potencial,
-      co2: data.co2,
-      parcelas: data.parcelamento,
-    };
+    try {
+      const { material, cep, currSpendingAmount } = userData;
+      setIsLoading(true);
+      const res = await fetch(
+        `https://api2.77sol.com.br/busca-cep?estrutura=${material}&valor_conta=${currSpendingAmount}&cep=${cep}`
+      );
+      const data = await res.json();
+      const formattedData: FetchedDataProps = {
+        potencial: data.potencial,
+        co2: data.co2,
+        parcelas: data.parcelamento,
+      };
 
-    setFetchedData(formattedData);
-    setIsLoading(false);
+      setFetchedData(formattedData);
+      setIsLoading(false);
+    } catch (err) {
+      alert("CEP NAO ENCONTRADO");
+      setIsLoading(false);
+      throw new Error("CEP NAO ENCONTRADO");
+    }
   }
 
   return (
